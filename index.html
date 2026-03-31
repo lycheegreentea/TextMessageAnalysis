@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8"></meta>
+        <title>Word2Vec Messages</title>
+        <style>
+
+        </style>
+        <div class="navbar">
+            <div class = "navbar-title">
+                <span class = "dot" id = "status"></span>
+                word2vec
+            </div>
+            <div class="tabs">
+                <div class = "tab active" onclick="switchTab('tools', this)">explore</div>
+                <div class="tab" onclick="switchTab('projector', this)">3d projector</div>
+
+
+            </div>
+        </div>
+        <div class="body">
+            <div id="tools-tab" style"display:flex;flex:1;overflow:hidden;">
+                <nav>
+                    <div class = "nav-section">tools</div>
+                    <div class="nav-item active" onclick="showPanel('analogy', this)">analogy</div>
+                    <div class="nav-item"></div>
+                </nav>
+            </div>
+        </div>
+    </head>
+</html>
