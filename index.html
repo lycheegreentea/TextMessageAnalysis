@@ -1,31 +1,348 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8"></meta>
-        <title>Word2Vec Messages</title>
-        <style>
+<head>
+<meta charset="UTF-8">
+<title>Word2Vec Explorer</title>
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeecea;
+  --text: #1a1a18; --text2: #5f5e5a; --text3: #888780;
+  --border: rgba(0,0,0,0.11); --border2: rgba(0,0,0,0.2);
+  --blue-bg: #e6f1fb; --blue: #185fa5; --blue-text: #0c447c;
+  --green-bg: #eaf3de; --green: #3b6d11; --green-text: #27500a;
+  --red-bg: #fcebeb; --red: #a32d2d; --red-text: #791f1f;
+  --purple-bg: #eeedfe; --purple-text: #3c3489;
+  --amber-bg: #faeeda; --amber-text: #633806;
+  --teal-bg: #e1f5ee; --teal-text: #085041;
+  --r: 8px; --rl: 12px;
+}
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #1c1c1a; --bg2: #242422; --bg3: #2c2c2a;
+    --text: #f0ede8; --text2: #b4b2a9; --text3: #888780;
+    --border: rgba(255,255,255,0.09); --border2: rgba(255,255,255,0.18);
+    --blue-bg: #0c447c; --blue: #85b7eb; --blue-text: #b5d4f4;
+    --green-bg: #27500a; --green: #97c459; --green-text: #c0dd97;
+    --red-bg: #791f1f; --red: #f09595; --red-text: #f7c1c1;
+    --purple-bg: #3c3489; --purple-text: #cecbf6;
+    --amber-bg: #633806; --amber-text: #fac775;
+    --teal-bg: #085041; --teal-text: #9fe1cb;
+  }
+}
+body { font-family: system-ui, sans-serif; background: var(--bg); color: var(--text); font-size: 15px; line-height: 1.6; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
+.topbar { display: flex; align-items: center; border-bottom: 0.5px solid var(--border2); background: var(--bg2); flex-shrink: 0; }
+.topbar-title { font-size: 13px; font-weight: 500; color: var(--text2); padding: 0 1.25rem; border-right: 0.5px solid var(--border2); height: 44px; display: flex; align-items: center; gap: 8px; }
+.dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); flex-shrink: 0; }
+.dot.ok  { background: #1D9E75; }
+.dot.err { background: #E24B4A; }
+.tabs { display: flex; height: 44px; }
+.tab { padding: 0 1.25rem; font-size: 13px; color: var(--text2); cursor: pointer; border-right: 0.5px solid var(--border); display: flex; align-items: center; border-bottom: 2px solid transparent; transition: background 0.1s; }
+.tab:hover { background: var(--bg3); color: var(--text); }
+.tab.active { color: var(--blue); border-bottom-color: var(--blue); background: var(--bg); font-weight: 500; }
+.body { display: flex; flex: 1; overflow: hidden; }
+nav { width: 180px; background: var(--bg2); border-right: 0.5px solid var(--border); padding: 1rem 0; flex-shrink: 0; }
+.nav-section { font-size: 10px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.08em; padding: 0.75rem 1rem 0.4rem; }
+.nav-item { display: block; padding: 0.45rem 1rem; font-size: 13px; color: var(--text2); cursor: pointer; border-left: 2px solid transparent; }
+.nav-item:hover { background: var(--bg3); color: var(--text); }
+.nav-item.active { color: var(--blue); border-left-color: var(--blue); background: var(--blue-bg); font-weight: 500; }
+main { flex: 1; overflow-y: auto; padding: 2rem 2.5rem; max-width: 800px; }
+.panel { display: none; }
+.panel.active { display: block; }
+#projector-wrap { display: none; flex: 1; flex-direction: column; overflow: hidden; }
+#projector-wrap.active { display: flex; }
+#projector-frame { flex: 1; border: none; width: 100%; }
+h2 { font-size: 18px; font-weight: 500; margin-bottom: 0.2rem; }
+.sub { font-size: 13px; color: var(--text2); margin-bottom: 1.5rem; }
+.field { margin-bottom: 1rem; }
+label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 4px; font-weight: 500; }
+input[type=text] { width: 100%; padding: 8px 12px; border: 0.5px solid var(--border2); border-radius: var(--r); background: var(--bg); color: var(--text); font-size: 14px; outline: none; }
+input[type=text]:focus { border-color: var(--blue); box-shadow: 0 0 0 2px rgba(55,138,221,0.15); }
+.row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; }
+button.run { margin-top: 0.25rem; padding: 8px 20px; border: 0.5px solid var(--border2); border-radius: var(--r); background: var(--bg); color: var(--text); font-size: 13px; cursor: pointer; font-weight: 500; }
+button.run:hover { background: var(--bg3); }
+button.run:active { transform: scale(0.98); }
+.hint { font-size: 12px; color: var(--text3); margin-top: 4px; }
+.results { margin-top: 1.5rem; }
+.err-box  { background: var(--red-bg); color: var(--red-text); padding: 10px 14px; border-radius: var(--r); font-size: 13px; }
+.loading  { color: var(--text3); font-size: 13px; }
+.pill     { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500; margin: 3px; }
+.p-blue   { background: var(--blue-bg);   color: var(--blue-text); }
+.p-purple { background: var(--purple-bg); color: var(--purple-text); }
+.p-teal   { background: var(--teal-bg);   color: var(--teal-text); }
+.p-amber  { background: var(--amber-bg);  color: var(--amber-text); }
+.p-green  { background: var(--green-bg);  color: var(--green-text); }
+.bar-row   { display: flex; align-items: center; gap: 10px; margin: 6px 0; }
+.bar-label { font-size: 13px; font-weight: 500; min-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bar-track { flex: 1; height: 6px; background: var(--bg3); border-radius: 3px; overflow: hidden; }
+.bar-fill  { height: 100%; border-radius: 3px; }
+.bar-val   { font-size: 12px; color: var(--text2); min-width: 48px; text-align: right; }
+.path-wrap  { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin-top: 1rem; }
+.path-arrow { color: var(--text3); font-size: 15px; }
+.path-sim   { font-size: 11px; color: var(--text3); }
+.sent-row   { display: flex; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 0.5px solid var(--border); }
+.sent-word  { font-size: 14px; font-weight: 500; min-width: 110px; display: flex; align-items: center; gap: 6px; }
+.sent-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 4px; overflow: hidden; }
+.sent-fill  { height: 100%; border-radius: 4px; }
+.sent-val   { font-size: 12px; color: var(--text2); min-width: 52px; text-align: right; }
+.tag     { display: inline-block; padding: 1px 7px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.tag-pos { background: var(--green-bg); color: var(--green-text); }
+.tag-neg { background: var(--red-bg);   color: var(--red-text); }
+.tag-neu { background: var(--bg3);      color: var(--text3); }
+.slabel  { font-size: 11px; font-weight: 500; color: var(--text3); text-transform: uppercase; letter-spacing: 0.06em; margin: 1.25rem 0 0.75rem; }
+</style>
+</head>
+<body>
 
-        </style>
-        <div class="navbar">
-            <div class = "navbar-title">
-                <span class = "dot" id = "status"></span>
-                word2vec
-            </div>
-            <div class="tabs">
-                <div class = "tab active" onclick="switchTab('tools', this)">explore</div>
-                <div class="tab" onclick="switchTab('projector', this)">3d projector</div>
+<div class="topbar">
+  <div class="topbar-title">
+    <span class="dot" id="status-dot"></span>
+    word2vec
+  </div>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab('tools', this)">explore</div>
+    <div class="tab" onclick="switchTab('projector', this)">3d projector</div>
+  </div>
+</div>
 
+<div class="body">
 
-            </div>
+  <div id="tools-tab" style="display:flex;flex:1;overflow:hidden;">
+    <nav>
+      <div class="nav-section">tools</div>
+      <div class="nav-item active" onclick="showPanel('analogy', this)">analogy</div>
+      <div class="nav-item" onclick="showPanel('wordpath', this)">word path</div>
+      <div class="nav-item" onclick="showPanel('sentiment', this)">sentiment</div>
+      <div class="nav-item" onclick="showPanel('similar', this)">similar words</div>
+    </nav>
+
+    <main>
+
+      <div class="panel active" id="panel-analogy">
+        <h2>analogy</h2>
+        <p class="sub">A − B + C = ? &nbsp;·&nbsp; classic word vector arithmetic</p>
+        <div class="row3">
+          <div class="field"><label>word A</label><input type="text" id="a-pos1" value="king"></div>
+          <div class="field"><label>minus</label><input type="text" id="a-neg" value="man"></div>
+          <div class="field"><label>plus</label><input type="text" id="a-pos2" value="woman"></div>
         </div>
-        <div class="body">
-            <div id="tools-tab" style"display:flex;flex:1;overflow:hidden;">
-                <nav>
-                    <div class = "nav-section">tools</div>
-                    <div class="nav-item active" onclick="showPanel('analogy', this)">analogy</div>
-                    <div class="nav-item"></div>
-                </nav>
-            </div>
+        <p class="hint">king − man + woman = ?</p>
+        <button class="run" onclick="runAnalogy()">run</button>
+        <div class="results" id="res-analogy"></div>
+      </div>
+
+      <div class="panel" id="panel-wordpath">
+        <h2>word path</h2>
+        <p class="sub">chain of words bridging distant concepts</p>
+        <div class="row2">
+          <div class="field"><label>start</label><input type="text" id="wp-start" value="cat"></div>
+          <div class="field"><label>end</label><input type="text" id="wp-end" value="car"></div>
         </div>
-    </head>
+        <div class="field" style="max-width:100px;"><label>max steps</label><input type="text" id="wp-steps" value="6"></div>
+        <button class="run" onclick="runWordPath()">find path</button>
+        <div class="results" id="res-wordpath"></div>
+      </div>
+
+      <div class="panel" id="panel-sentiment">
+        <h2>sentiment</h2>
+        <p class="sub">distance from positive vs negative anchors</p>
+        <div class="field">
+          <label>words (comma separated)</label>
+          <input type="text" id="sent-words" value="vacation, hospital, monday, pizza, meeting, dentist, love, deadline, friday, rain">
+        </div>
+        <div class="row2">
+          <div class="field"><label>positive anchor</label><input type="text" id="sent-pos" value="good"></div>
+          <div class="field"><label>negative anchor</label><input type="text" id="sent-neg" value="bad"></div>
+        </div>
+        <button class="run" onclick="runSentiment()">analyze</button>
+        <div class="results" id="res-sentiment"></div>
+      </div>
+
+      <div class="panel" id="panel-similar">
+        <h2>similar words</h2>
+        <p class="sub">nearest neighbors in vector space</p>
+        <div class="field"><label>word</label><input type="text" id="sim-word" placeholder="python"></div>
+        <button class="run" onclick="runSimilar()">search</button>
+        <div class="results" id="res-similar"></div>
+      </div>
+
+    </main>
+  </div>
+
+  <div id="projector-wrap">
+    <iframe id="projector-frame" src="" title="Embedding Projector"></iframe>
+  </div>
+
+</div>
+
+<script>
+let projectorLoaded = false;
+
+async function checkServer() {
+  try {
+    const r = await fetch("/api/ping");
+    const d = await r.json();
+    document.getElementById("status-dot").className = "dot ok";
+    document.title = "word2vec · " + d.vocab_size.toLocaleString() + " words";
+  } catch {
+    document.getElementById("status-dot").className = "dot err";
+  }
+}
+checkServer();
+
+function switchTab(tab, el) {
+  document.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+  el.classList.add("active");
+  const toolsTab      = document.getElementById("tools-tab");
+  const projectorWrap = document.getElementById("projector-wrap");
+  if (tab === "tools") {
+    toolsTab.style.display = "flex";
+    projectorWrap.classList.remove("active");
+  } else {
+    toolsTab.style.display = "none";
+    projectorWrap.classList.add("active");
+    if (!projectorLoaded) {
+      const config = encodeURIComponent(JSON.stringify({
+        embeddings: [{
+          tensorName:   "iMessage Word2Vec",
+          tensorShape:  [10000, 100],
+          tensorPath:   "http://localhost:5050/vectors.tsv",
+          metadataPath: "http://localhost:5050/metadata.tsv"
+        }]
+      }));
+      document.getElementById("projector-frame").src =
+        "http://localhost:5050/projector/?config=" + config;
+      projectorLoaded = true;
+    }
+  }
+}
+
+function showPanel(id, el) {
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("active"));
+  document.querySelectorAll(".nav-item").forEach(n => n.classList.remove("active"));
+  document.getElementById("panel-" + id).classList.add("active");
+  el.classList.add("active");
+}
+
+function setLoading(id) {
+  document.getElementById("res-" + id).innerHTML = '<span class="loading">running...</span>';
+}
+function setErr(id, msg) {
+  document.getElementById("res-" + id).innerHTML = `<div class="err-box">${msg}</div>`;
+}
+
+const pillCols = ["p-blue", "p-purple", "p-teal", "p-green", "p-amber"];
+
+async function runAnalogy() {
+  setLoading("analogy");
+  const pos1 = document.getElementById("a-pos1").value.trim().toLowerCase();
+  const neg  = document.getElementById("a-neg").value.trim().toLowerCase();
+  const pos2 = document.getElementById("a-pos2").value.trim().toLowerCase();
+  try {
+    const r = await fetch("/api/analogy", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({positive: [pos1, pos2], negative: [neg]})
+    });
+    const d = await r.json();
+    if (d.error) return setErr("analogy", d.error);
+    let html = `<p style="font-size:13px;color:var(--text2);margin-bottom:10px;">${pos1} − ${neg} + ${pos2} =</p>`;
+    html += d.map((item, i) =>
+      `<span class="pill ${pillCols[i % pillCols.length]}">${item.word}<span style="font-size:11px;opacity:.65">${item.score.toFixed(3)}</span></span>`
+    ).join("");
+    document.getElementById("res-analogy").innerHTML = html;
+  } catch { setErr("analogy", "API not reachable"); }
+}
+
+async function runWordPath() {
+  setLoading("wordpath");
+  const start = document.getElementById("wp-start").value.trim().toLowerCase();
+  const end   = document.getElementById("wp-end").value.trim().toLowerCase();
+  const steps = parseInt(document.getElementById("wp-steps").value) || 6;
+  try {
+    const r = await fetch("/api/wordpath", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({start, end, steps})
+    });
+    const d = await r.json();
+    if (d.error) return setErr("wordpath", d.error);
+    let html = '<div class="path-wrap">';
+    d.path.forEach((word, i) => {
+      html += `<span class="pill ${pillCols[i % pillCols.length]}">${word}</span>`;
+      if (i < d.path.length - 1)
+        html += `<span class="path-arrow">→</span><span class="path-sim">${d.similarities[i].toFixed(2)}</span><span class="path-arrow">→</span>`;
+    });
+    html += `</div><p style="font-size:12px;color:var(--text3);margin-top:10px;">${d.path.length} hops · ended at <strong>${d.path[d.path.length - 1]}</strong></p>`;
+    document.getElementById("res-wordpath").innerHTML = html;
+  } catch { setErr("wordpath", "API not reachable"); }
+}
+
+async function runSentiment() {
+  setLoading("sentiment");
+  const words = document.getElementById("sent-words").value.split(",").map(w => w.trim().toLowerCase()).filter(Boolean);
+  const pos   = document.getElementById("sent-pos").value.trim().toLowerCase();
+  const neg   = document.getElementById("sent-neg").value.trim().toLowerCase();
+  try {
+    const r = await fetch("/api/sentiment", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({words, positive: pos, negative: neg})
+    });
+    const d = await r.json();
+    if (d.error) return setErr("sentiment", d.error);
+    const scores = d.filter(x => x.score !== undefined).map(x => x.score);
+    const maxAbs = Math.max(...scores.map(Math.abs), 0.01);
+    let html = `<div class="slabel">sorted · ${pos} vs ${neg}</div><div style="border-top:0.5px solid var(--border)">`;
+    d.forEach(item => {
+      if (item.error) {
+        html += `<div class="sent-row"><span class="sent-word">${item.word}</span><span style="font-size:12px;color:var(--text3)">not in vocab</span></div>`;
+        return;
+      }
+      const pct   = (Math.abs(item.score) / maxAbs * 100).toFixed(1);
+      const color = item.score > 0.05 ? "#1D9E75" : item.score < -0.05 ? "#E24B4A" : "#888780";
+      const tag   = item.score > 0.05
+        ? `<span class="tag tag-pos">${pos}</span>`
+        : item.score < -0.05
+        ? `<span class="tag tag-neg">${neg}</span>`
+        : `<span class="tag tag-neu">~</span>`;
+      html += `<div class="sent-row"><span class="sent-word">${item.word}${tag}</span><div class="sent-track"><div class="sent-fill" style="width:${pct}%;background:${color}"></div></div><span class="sent-val">${item.score > 0 ? "+" : ""}${item.score.toFixed(3)}</span></div>`;
+    });
+    html += "</div>";
+    document.getElementById("res-sentiment").innerHTML = html;
+  } catch { setErr("sentiment", "API not reachable"); }
+}
+
+async function runSimilar() {
+  setLoading("similar");
+  const word = document.getElementById("sim-word").value.trim().toLowerCase();
+  try {
+    const r = await fetch("/api/similar", {
+      method: "POST",
+      headers: {"Content-Type": "application/json"},
+      body: JSON.stringify({word, topn: 12})
+    });
+    const d = await r.json();
+    if (d.error) return setErr("similar", d.error);
+    const max = d[0]?.score || 1;
+    let html = `<div class="slabel">nearest to "${word}"</div>`;
+    d.forEach(item => {
+      const pct = (item.score / max * 100).toFixed(1);
+      html += `<div class="bar-row"><span class="bar-label">${item.word}</span><div class="bar-track"><div class="bar-fill" style="width:${pct}%;background:#378ADD"></div></div><span class="bar-val">${item.score.toFixed(3)}</span></div>`;
+    });
+    document.getElementById("res-similar").innerHTML = html;
+  } catch { setErr("similar", "API not reachable"); }
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key !== "Enter" || e.target.tagName === "BUTTON") return;
+  const active = document.querySelector(".panel.active")?.id;
+  if      (active === "panel-analogy")   runAnalogy();
+  else if (active === "panel-wordpath")  runWordPath();
+  else if (active === "panel-sentiment") runSentiment();
+  else if (active === "panel-similar")   runSimilar();
+});
+</script>
+</body>
 </html>
