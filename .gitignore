@@ -1,0 +1,8 @@
+imessage_word2vec.model
+imessage_word2vec.model.wv.vectors.npy
+*.npy
+vectors.tsv
+metadata.tsv
+dist/
+build/
+*.spec
