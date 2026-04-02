@@ -1,8 +1,14 @@
+build/
+dist/
+*.spec
 imessage_word2vec.model
 imessage_word2vec.model.wv.vectors.npy
 *.npy
 vectors.tsv
 metadata.tsv
-dist/
-build/
-*.spec
+cleaned_tokenized_text.txt
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+.DS_Store
