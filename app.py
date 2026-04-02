@@ -22,7 +22,10 @@ else:
 MODEL_PATH   = BASE_DIR / "imessage_word2vec.model"
 VECTORS_TSV  = BASE_DIR / "vectors.tsv"
 METADATA_TSV = BASE_DIR / "metadata.tsv"
-INDEX_HTML   = BASE_DIR / "index.html"
+if getattr(sys, "frozen", False):
+    INDEX_HTML = Path(sys._MEIPASS) / "index.html"
+else:
+    INDEX_HTML = BASE_DIR / "index.html"
 PROJECTOR_DIR = BASE_DIR / "embedding-projector-standalone"
 TOP_N        = 10_000
 PORT         = 5050
@@ -66,7 +69,7 @@ print(f"Ready. Vocabulary: {len(model.wv.key_to_index):,} words")
 
 
 def export_tsvs() -> None:
-    words: list[str]          = list(model.wv.key_to_index.keys())[:TOP_N]
+    words: list[str] = [str(w) for w in model.wv.key_to_index.keys()][:TOP_N]
     vectors: list[np.ndarray] = [model.wv.get_vector(w) for w in words]
 
     print(f"Writing vectors.tsv ({len(words):,} words)...")
