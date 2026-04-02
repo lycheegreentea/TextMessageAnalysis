@@ -26,7 +26,7 @@ if getattr(sys, "frozen", False):
     INDEX_HTML = Path(sys._MEIPASS) / "index.html"
 else:
     INDEX_HTML = BASE_DIR / "index.html"
-PROJECTOR_DIR = BASE_DIR / "embedding-projector-standalone"
+PROJECTOR_DIR = BASE_DIR / "projector"
 TOP_N        = 10_000
 PORT         = 5050
 
@@ -97,11 +97,24 @@ def vectors():
 @app.route("/metadata.tsv")
 def metadata():
     return send_file(METADATA_TSV, mimetype="text/tab-separated-values")
-
-# Serves the local projector (cloned from GitHub) to avoid HTTPS/HTTP conflicts
+@app.route("/config.json")
+def config():
+    return jsonify({
+        "embeddings": [{
+            "tensorName": "iMessage Word2Vec",
+            "tensorShape": [TOP_N, 100],
+            "tensorPath": "http://localhost:5050/vectors.tsv",
+            "metadataPath": "http://localhost:5050/metadata.tsv"
+        }]
+    })
 @app.route("/projector/")
 @app.route("/projector")
 def projector_index():
+    p = PROJECTOR_DIR / "index.html"
+    print(f"Looking for projector at {p}")
+    print(f"Exists: {p.exists()}")
+    if not p.exists():
+        return("Not found", 404)
     return send_file(PROJECTOR_DIR / "index.html")
 
 @app.route("/projector/<path:filename>")

@@ -203,17 +203,7 @@ function switchTab(tab, el) {
     toolsTab.style.display = "none";
     projectorWrap.classList.add("active");
     if (!projectorLoaded) {
-      const config = encodeURIComponent(JSON.stringify({
-        embeddings: [{
-          tensorName:   "iMessage Word2Vec",
-          tensorShape:  [10000, 100],
-          tensorPath:   "http://localhost:5050/vectors.tsv",
-          metadataPath: "http://localhost:5050/metadata.tsv"
-        }]
-      }));
-      document.getElementById("projector-frame").src =
-        "http://localhost:5050/projector/?config=" + config;
-      projectorLoaded = true;
+      document.getElementById("projector-frame").src = "http://localhost:5050/projector/index.html?config=http://localhost:5050/config.json";
     }
   }
 }
